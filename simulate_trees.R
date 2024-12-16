@@ -12,6 +12,10 @@ times <- c(0, 1, 2, 3)
 l <- length(times)
 ntrees <- 200
 run_count <- 0
+if (!(dir.exists("simulated_trees"))) {
+    dir.create("simulated_trees")
+}
+
 while (dir.exists(paste("simulated_trees/", run_count, sep = ""))) {
     run_count <- run_count + 1
 }
