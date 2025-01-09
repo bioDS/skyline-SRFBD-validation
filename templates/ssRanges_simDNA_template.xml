@@ -7,11 +7,11 @@
        :beast.pkgmgmt
        :beast.base.core
        :beast.base.inference.util:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.base.evolution.alignment
-       :ssr.evolution.operators
+       :sr.evolution.operators
        :sa.evolution.operators
-       :ssr.evolution.tree
-       :ssr.evolution.sranges
-       :ssr.speciation
+       :sr.evolution.tree
+       :sr.evolution.sranges
+       :sr.speciation
        :feast.parameter
        :ssr.speciation'>
 
