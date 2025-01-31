@@ -29,7 +29,7 @@ print(t)
 con <- file(paste(trees_dir, "/out", sep = ""), "r")
 line <- readLines(con, n = 1)
 tree_count <- 0
-while ((length(line) != 0) && (tree_count < 1)) {
+while ((length(line) != 0) && (tree_count < 2)) {
     edited_line <- line
     tree <- ape::read.tree(text = line)
     tmp_tree <- ape::read.tree(text = line)
@@ -37,6 +37,7 @@ while ((length(line) != 0) && (tree_count < 1)) {
     sample_times <- ape::node.depth.edgelength(tmp_tree)
     true_params = t[(tree_count*4+1):(tree_count*4+4),]
     cat("tree count ", tree_count, " ",tree_count*4+1, " ", tree_count*4+4,  "\n")
+    cat("True parameters are\n")
     print(true_params)
     mrca <- max(sample_times)
     sample_times <- max(sample_times) - sample_times
@@ -280,6 +281,8 @@ while ((length(line) != 0) && (tree_count < 1)) {
     rnd_sampling_prop <- runif(l, 0.2, 0.8)
     rnd_sampl_extant_prob <- runif(1, 0.7, 1)
 
+
+
     # rnd_birth = rnd_div_rate/(1-rnd_turnover)
     # rnd_death = rnd_div_rate*rnd_turnover/(1-rnd_turnover)
     # rnd_sampling = rnd_sampl_extant_prob*rnd_death/(1-rnd_sampling_prop)
@@ -301,15 +304,15 @@ while ((length(line) != 0) && (tree_count < 1)) {
                x = sim)
   sim  <- gsub(pattern = "<initDiversificationRate/>",
                replace = paste0("<parameter id='netDiversification' lower='0.0'
-                                name='stateNode'>",rnd_div_rate,"</parameter>"),
+                                name='stateNode'>",paste(rnd_div_rate, collapse=' '),"</parameter>"),
                x = sim)
   sim  <- gsub(pattern = "<initTurnover/>",
                replace = paste0("<parameter id='turnOver' lower='0.' upper = '1.'
-                                name='stateNode'>",rnd_turnover,"</parameter>"),
+                                name='stateNode'>",paste(rnd_turnover, collapse=' '),"</parameter>"),
                x = sim)
   sim  <- gsub(pattern = "<initSamplingProportion/>",
                replace = paste0("<parameter id='samplingProportion' lower='0.0'
-                                name='stateNode'>",rnd_sampling_prop,"</parameter>"),
+                                name='stateNode'>",paste(rnd_sampling_prop, collapse=' '),"</parameter>"),
                x = sim)
   
   sim  <- gsub(pattern = "<initSamplingAtPresentProb/>",
