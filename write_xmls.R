@@ -161,12 +161,6 @@ while ((length(line) != 0)) {
         }
     }
 
-    # print(tmp_tree$tip.label)
-  
-    # cat("AGES\n")
-    # print(ages)
-    #     cat("TAXON HERE\n")
-    # print(taxon)
     cat("LINES\n")
     print(line)
     cat("lines2\n")
