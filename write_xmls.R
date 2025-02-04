@@ -22,24 +22,31 @@ t <- fread(paste(trees_dir, "/params", sep = ""), sep=" ", fill = TRUE)
 n<-dim(t)[1]
 t<-t[1:(n-2),]
 print(t)
-
-
+params_f <- paste("adjusted_params", sep = "")
+pf <- file(params_f, "wb")
 
 
 con <- file(paste(trees_dir, "/out", sep = ""), "r")
 line <- readLines(con, n = 1)
 tree_count <- 0
-while ((length(line) != 0) && (tree_count < 2)) {
+good = 0
+while ((length(line) != 0)) {
     edited_line <- line
     tree <- ape::read.tree(text = line)
     tmp_tree <- ape::read.tree(text = line)
     renamed_tree = ape::read.tree(text = line)
     sample_times <- ape::node.depth.edgelength(tmp_tree)
     true_params = t[(tree_count*4+1):(tree_count*4+4),]
+    mrca <- max(sample_times)
+    true_params$mrca = mrca
     cat("tree count ", tree_count, " ",tree_count*4+1, " ", tree_count*4+4,  "\n")
     cat("True parameters are\n")
     print(true_params)
-    mrca <- max(sample_times)
+            write.table(true_params, pf,
+            append = file.exists(params_f),
+            row.names = F, quote = F, col.names = (good == 0)
+        )
+    good = 1
     sample_times <- max(sample_times) - sample_times
     sample_times_round <- round(sample_times, 15)
     sample_times_round[which(sample_times_round < 1e-5)] <- 0
