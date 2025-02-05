@@ -149,7 +149,7 @@
         <operator id='treeScaler' spec="SAScaleOperator" scaleFactor=".95" weight="10.0" tree="@tree"/>
 
 
-        <logger logEvery="200" fileName="sRanges.$(seed).log">
+        <logname/>
             <model idref='posterior'/>
             <log idref="dnaTreeLikelihood"/>
 <!-- 
@@ -164,8 +164,8 @@
             <log idref="rho"/>
             <log idref="posterior"/>
         </logger>
-        <logger logEvery="5000" fileName="sRanges.$(seed).trees">
-            <log idref="tree"/>
+        <logtreename/>
+        <log idref="tree"/>
         </logger>
     </run>
         
