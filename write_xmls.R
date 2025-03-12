@@ -14,9 +14,9 @@ library(R.utils)
 
 
 templates_dir <- "templates/"
-trees_dir <- "simulated_trees/0"
+trees_dir <- "simulated_trees/5" # /0
 pcon <- file(paste(trees_dir, "/params", sep = ""), "r")
-l <- 4
+l <- 2
 ntrees <- 0
 t <- fread(paste(trees_dir, "/params", sep = ""), sep = " ", fill = TRUE)
 n <- dim(t)[1]
@@ -30,16 +30,16 @@ con <- file(paste(trees_dir, "/out", sep = ""), "r")
 line <- readLines(con, n = 1)
 tree_count <- 0
 good <- 0
-while ((length(line) != 0)) {
+while ((length(line) != 0) && (tree_count < 200)) {
     edited_line <- line
     tree <- ape::read.tree(text = line)
     tmp_tree <- ape::read.tree(text = line)
     renamed_tree <- ape::read.tree(text = line)
     sample_times <- ape::node.depth.edgelength(tmp_tree)
-    true_params <- t[(tree_count * 4 + 1):(tree_count * 4 + 4), ]
+    true_params <- t[(tree_count * l + 1):(tree_count * l + l), ]
     mrca <- max(sample_times)
     true_params$mrca <- mrca
-    cat("tree count ", tree_count, " ", tree_count * 4 + 1, " ", tree_count * 4 + 4, "\n")
+    cat("tree count ", tree_count, " ", tree_count * l + 1, " ", tree_count * l + l, "\n")
     cat("True parameters are\n")
     print(true_params)
     write.table(true_params, pf,
@@ -50,7 +50,6 @@ while ((length(line) != 0)) {
     sample_times <- max(sample_times) - sample_times
     sample_times_round <- round(sample_times, 15)
     sample_times_round[which(sample_times_round < 1e-5)] <- 0
-    # print(sample_times_round)
 
     taxon <- list()
     taxon_extant <- list()
@@ -70,9 +69,9 @@ while ((length(line) != 0)) {
         start <- sub("_.*", "", tip)
         a <- sample_times_round[k]
         # cat("a = ", a, "\n")
-        # if (a == 0.0){
-        #     extinct = append(extinct, tip)
-        # }
+        if (a == 0.0) {
+            extinct <- append(extinct, tip)
+        }
 
         if (str_detect(tip, ".*_\\d+") && start %notin% done) {
             done <- append(done, start)
@@ -88,33 +87,39 @@ while ((length(line) != 0)) {
             smallest_time <- sample_times_round[selected_index]
             smallest_time <- min(smallest_time[1:(length(smallest_time) / 2)])
             smallest <- (selected_tips[1:(length(all_ages) / 2)])[selected_ages == smallest_time]
+            if (length(smallest) > 1) {
+                smallest <- smallest[1]
+            }
+            last <- smallest
+            last_time <- smallest_time
             if (smallest_time != 0.0) {
-                taxon_death <- append(taxon_death, smallest)
+                taxon_death <- append(taxon_death, paste0(start, "_last"))
                 ages_death <- append(ages_death, smallest_time)
                 if ((length(ages_death) != length(taxon_death)) && mark == 0) {
-                    cat("smallest time ", smallest_time, "\n")
-                    cat("ages death length", length(ages_death), " taxon death ", length(taxon_death))
-                    cat("smallest ", smallest, "\n")
-                    cat("\n")
-                    print(selected_ages == smallest_time)
-                    cat("\nall ages: ")
-                    print(all_ages)
-                    cat("\nselect ages: ")
-                    print(selected_ages)
+                    # cat("smallest time ", smallest_time, "\n")
+                    # cat("ages death length", length(ages_death), " taxon death ", length(taxon_death))
+                    # cat("smallest ", smallest, "\n")
+                    # cat("\n")
+                    # print(selected_ages == smallest_time)
+                    # cat("\nall ages: ")
+                    # print(all_ages)
+                    # cat("\nselect ages: ")
+                    # print(selected_ages)
                     mark <- 1
                 }
             }
-            # print(tree$tip.label[str_detect(tree$tip.label,paste0(start,"_\\d+"))])
+            first <- smallest
+            first_time <- smallest_time
             for (label in tree$tip.label[str_detect(tree$tip.label, paste0(start, "_\\d+"))]) {
                 age <- sample_times_round[tree$tip.label == label][1]
-                if (age == 0.0) {
-                    taxon_extant <- append(taxon_extant, label)
-                } else {
+                # if (age == 0.0) {
+                #   taxon_extant <- append(taxon_extant, paste0(start, "_last"))
+                if (age != 0.0) {
                     if (age > smallest_time) {
-                        if (age < last_time) {
-                            last <- label
-                            last_time <- age
-                        }
+                        # if (age < last_time) {
+                        #   last <- label
+                        #   last_time <- age
+                        # }
                         if (age > first_time) {
                             first <- label
                             first_time <- age
@@ -125,6 +130,9 @@ while ((length(line) != 0)) {
             if ((!(is.na(first))) && !(is.na(last))) {
                 tmp_tree$tip.label[tmp_tree$tip.label == first] <- paste0(start, "_first")
                 taxon <- append(taxon, paste0(start, "_first"))
+                if (first_time == 0.0 && last_time == 0.0 && paste0(start, "_first") %notin% taxon_extant) {
+                    taxon_extant <- append(taxon_extant, paste0(start, "_first"))
+                }
                 edited_line <- gsub(pattern = first, replace = paste0(start, "_first"), x = edited_line)
                 ages <- append(ages, first_time)
                 if (first_time != last_time) {
@@ -139,6 +147,9 @@ while ((length(line) != 0)) {
                         )
                     )
                     taxon <- append(taxon, paste0(start, "_last"))
+                    if (last_time == 0.0 && first_time != 0.0 && paste0(start, "_last") %notin% taxon_extant) {
+                        taxon_extant <- append(taxon_extant, paste0(start, "_last"))
+                    }
                     ages <- append(ages, last_time)
                     edited_line <- gsub(pattern = last, replace = paste0(start, "_last"), x = edited_line)
                 } else {
@@ -158,6 +169,8 @@ while ((length(line) != 0)) {
         }
     }
 
+
+
     n_ranges <- j
     sim <- readLines(paste0(templates_dir, "ssRanges_simDNA_template.xml"))
     sim <- gsub(
@@ -165,28 +178,22 @@ while ((length(line) != 0)) {
         replace = paste0("newick='", edited_line, "'"), x = sim
     )
     taxon_extant_str <- c()
-    taxon_str <- c()
-    taxon_set_str <- c()
-    taxa_age_str <- c()
-    txc <- 1
-    for (tx in taxon_extant) {
+    for (tx in taxon) {
         taxon_extant_str <- c(taxon_extant_str, paste0("<sequence spec='Sequence' taxon='", tx, "' value='?'/>"))
-        taxon_set_str <- c(taxon_set_str, paste0("<taxon spec='Taxon' id='", tx, "'/>"))
-        taxa_age_str <- c(taxa_age_str, paste0(tx, "=", 0))
-        txc <- txc + 1
     }
     taxon_extant_str <- paste0(taxon_extant_str, collapse = "\n\t\t\t")
 
-
-    txc <- 1
-    txcnow <- 0
+    taxon_str <- c()
+    taxon_set_str <- c()
+    taxa_age_str <- c()
     for (tx in taxon) {
         taxon_str <- c(taxon_str, paste0("<sequence spec='Sequence' taxon='", tx, "' value='?'/>"))
         taxon_set_str <- c(taxon_set_str, paste0("<taxon spec='Taxon' id='", tx, "'/>"))
-        taxa_age_str <- c(taxa_age_str, paste0(tx, "=", ages[txc]))
-        txc <- txc + 1
+        taxa_age_str <- c(taxa_age_str, paste0(tx, "=", sample_times_round[which(tmp_tree$tip.label == tx)]))
     }
-
+    taxon_str <- paste0(taxon_str, collapse = "\n\t\t\t")
+    taxon_set_str <- paste0(taxon_set_str, collapse = "\n\t\t\t\t\t\t")
+    taxa_age_str <- paste0(taxa_age_str, collapse = ", ")
 
 
     sim <- gsub(
@@ -197,44 +204,25 @@ while ((length(line) != 0)) {
     writeLines(sim, con = "ssRanges_simDNA.xml")
     cmd <- "beast/bin/beast  -seed 42 ssRanges_simDNA.xml"
     system(cmd)
-    # cat("taxon death\n")
-    # print(taxon_death)
 
-    # extinct <- taxon[which(taxon %notin% taxon_extant)]
-    cat("extinct is\n")
-    print(extinct)
-
+    ## remove DNA from extinct occurences
+    extinct <- taxon[which(taxon %notin% taxon_extant)]
     dna_sim <- readLines("simulated_dna_alignment.xml")
-    txc <- 1
-    # cat("ages death length", length(ages_death), " taxon death ", length(taxon_death))
-    for (tax in taxon_death) {
-        cat("tax = ", tax, " age \n")
-        print(ages_death[txc])
-        cat("txc = ", txc)
-        idx <- grep(paste0("'", tax), dna_sim)
+    idx <- grep("<data id=", dna_sim)
+    dna_sim[idx] <- "<data id='dna_alignment' spec='beast.base.evolution.alignment.Alignment'>"
+    for (tax in extinct) {
+        idx <- grep(tax, dna_sim)
         dna_sim[idx] <- paste0(
             "    <sequence spec='beast.base.evolution.alignment.Sequence' taxon='",
             tax, "' value='", paste0(rep("-", 1000),
                 collapse = ""
             ), "'/>"
         )
-        taxon_set_str <- c(taxon_set_str, paste0("<taxon spec='Taxon' id='", tax, "'/>"))
-        taxa_age_str <- c(taxa_age_str, paste0(tax, "=", ages_death[txc]))
-        txc <- txc + 1
     }
-    idx <- grep("<data id=", dna_sim)
-    dna_sim[idx] <- "<data id='dna_alignment' spec='beast.base.evolution.alignment.Alignment'>"
-    #     for (tax in extinct){
-    #     idx  <- grep(paste0("'",tax), dna_sim)
-    #     dna_sim[idx] <- paste0("    <sequence spec='beast.base.evolution.alignment.Sequence' taxon='",
-    #                            tax,"' value='", paste0(rep("-", 1000),
-    #                                                    collapse = ""), "'/>")
-    #   }
     dna_sim <- gsub(
         pattern = "id='Sequence",
         replace = "id='dna", x = dna_sim
     )
-
 
     writeLines(dna_sim, "simulated_dna_alignment.xml")
 
@@ -283,7 +271,8 @@ while ((length(line) != 0)) {
     rnd_sampling_prop <- runif(l, 0.2, 0.8)
     rnd_sampl_extant_prob <- runif(1, 0.7, 1)
 
-
+    # rnd_div_rate[1] <- true_params$d[1]
+    # print(true_params$d)
 
     # rnd_birth = rnd_div_rate/(1-rnd_turnover)
     # rnd_death = rnd_div_rate*rnd_turnover/(1-rnd_turnover)
@@ -306,6 +295,11 @@ while ((length(line) != 0)) {
                                 name='stateNode'>", rnd_origin, "</parameter>"),
         x = sim
     )
+    # sim <- gsub(
+    #     pattern = "<div/>",
+    #     replace = paste(true_params$d, collapse = " "),
+    #     x = sim
+    # )
     sim <- gsub(
         pattern = "<initDiversificationRate/>",
         replace = paste0("<parameter id='netDiversification' lower='0.0'
@@ -333,41 +327,9 @@ while ((length(line) != 0)) {
     )
 
 
-
-    #   sim  <- gsub(pattern = "<initOrigin/>",
-    #            replace = paste0("<parameter id='origin' lower='0.0'
-    #                             name='stateNode'>",rnd_origin,"</parameter>"),
-    #            x = sim)
-
-
-
-    # sim <- gsub(
-    #     pattern = "<initBirth/>",
-    #     replace = paste0("<parameter id='birthRate' lower='0.0'
-    #                             name='stateNode'>", rnd_birth, "</parameter>"),
-    #     x = sim
-    # )
-    # sim <- gsub(
-    #     pattern = "<initDeath/>",
-    #     replace = paste0("<parameter id='deathRate' lower='0.0'
-    #                             name='stateNode'>", rnd_death, "</parameter>"),
-    #     x = sim
-    # )
-    # sim <- gsub(
-    #     pattern = "<initSampling/>",
-    #     replace = paste0("<parameter id='samplingRate' lower='0.' upper = '1.'
-    #                             name='stateNode'>", rnd_sampling, "</parameter>"),
-    #     x = sim
-    # )
-    # sim <- gsub(
-    #     pattern = "<initRho/>",
-    #     replace = paste0("<parameter id='m_rho' lower='0.0'
-    #                             name='stateNode'>", rnd_sampl_extant_prob, "</parameter>"),
-    #     x = sim
-    # )
     cat("mrca", mrca, "\n")
-    inf_dir <- paste0("inf/", tree_count)
-    inf_full <- paste0("/home/ket581/skyline/SUMMER/skyline-SRFBD-validation/inf/", tree_count)
+    inf_dir <- paste0("inf_2_ints/", tree_count)
+    inf_full <- paste0("/home/ket581/skyline/SUMMER/skyline-SRFBD-validation/inf_2_ints/", tree_count)
     dir.create(inf_dir, recursive = T)
 
 

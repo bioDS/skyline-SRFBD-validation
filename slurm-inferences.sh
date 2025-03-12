@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH --time=24:00:00
-#SBATCH --mem=2000M
-#SBATCH --cpus-per-task=4
+#SBATCH --mem=10000M
+#SBATCH --cpus-per-task=1
 #SBATCH --output=logs/slurm-%A_%a.out
 #SBATCH --error=logs/slurm-%A_%a.err
 #SBATCH --job-name=dna_job
 #SBATCH --array=0-199
 
 SEED=$SLURM_ARRAY_TASK_ID 
-cd "inf/${SEED}/";
+cd "inf_2_ints/${SEED}/";
 ~/skyline/zulu17.54.21-ca-fx-jdk17.0.13-linux_x64/bin/java -Djava.awt.headless=true -Djava.library.path=/lib/x86_64-linux-gnu/  \
     --add-modules javafx.fxml,javafx.base \
     -jar ../../ssr.jar -threads -1 -seed 42 \

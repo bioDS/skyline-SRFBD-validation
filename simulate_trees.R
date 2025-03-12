@@ -5,10 +5,13 @@
 
 library("TreeSim")
 library("FossilSim")
+library("stringr")
 set.seed(321)
+"%notin%" <- Negate("%in%")
+
 good <- 0
 # Use 4 intervals
-times <- c(0, 1, 2, 3)
+times <- c(0, 2) # c(0, 1, 2, 3)
 l <- length(times)
 ntrees <- 200
 run_count <- 0
@@ -30,7 +33,7 @@ extinction_reject <- 0
 while (good < ntrees) {
     origin <- 4
     cat("Valid trees generated = ", good, "\n")
-    # Distribitions for parameters (diversification rate, turnover, rho, sampling proportion)
+    # Distributions for parameters (diversification rate, turnover, rho, sampling proportion)
     d <- runif(l, min = 0.7, max = 0.9)
     v <- runif(l, min = 0.2, max = 0.8)
     rho <- runif(1, min = 0.7, max = 1)
@@ -53,74 +56,38 @@ while (good < ntrees) {
     } else {
         t <- tree[1][[1]]
         origin <- tree.max(as.phylo(t))
-        cat("origin as tree max is ", origin)
         horizons <- c(times, origin)
         tax <- sim.taxonomy(tree = t)
-        print(t)
-        print(tax)
-        # pdf(paste(out_dir, good, ".pdf", sep = ""))
-        # plot(tax, tree = t)
-        # dev.off()
-
-        f <- sim.fossils.intervals(taxonomy = tax, interval.ages = horizons, rate = sampling)
-        # pdf(paste(out_dir, good, ".f.pdf", sep = ""))
-        # plot(f, tree = t, taxonomy = tax, show.taxonomy = TRUE)
-        # dev.off()
-
-        # print(write.tree(t))
+        f <- sim.fossils.intervals(taxonomy = tax, interval.ages = horizons, rates = sampling)
 
         f_ss <- FossilSim::subsample.fossils.uniform.intervals(f, s, times)
         f_ss <- sim.extant.samples(f_ss, t, rho = rho)
-        print(f_ss)
         pdf(paste(out_dir, good, ".fss.pdf", sep = ""))
         plot(f_ss, tree = t, taxonomy = tax, show.taxonomy = TRUE)
         dev.off()
 
-        # fn <- paste(out_dir, good, ".fss", sep = "")
-        # write.table(f_ss, fn, row.names = F, append = file.exists(fn), quote = F, sep = "\t")
-
         oy <- subsample.fossils.oldest.and.youngest(f_ss, t)
-        extant_samples <- oy$hmin[oy$hmin < 0.00005]
-        if (length(extant_samples) < 5) {
-            unlink(paste(out_dir, good, sep = ""))
-            cat("\nDELETING DIRECTORY\n")
+        tree <- FossilSim::SAtree.from.fossils(tree = t, fossils = oy)
+
+
+        fossils <- tree$fossils
+        extant_samples <- fossils$tip.label[fossils$hmin < 0.00005]
+        tree <- tree$tree
+        tree <- sampled.tree.from.combined(tree, sampled_tips = extant_samples)
+
+        nfossils <- length(tree$tip.label)
+
+        if ((nfossils > 1000) || (length(extant_samples) < 5)) {
             sample_reject <- sample_reject + 1
             next
         }
-
-        pdf(paste(out_dir, good, ".old_young.pdf", sep = ""))
-        plot(oy, tree = t, taxonomy = tax, show.taxonomy = TRUE)
-        dev.off()
-        # pdf(paste(out_dir, good, ".SR.pdf", sep = ""))
-        # dev.off()
-
-        # fn <- paste(out_dir, good, ".oy", sep = "")
-        # write.table(oy, fn, append = file.exists(fn), row.names = F, quote = F, sep = "\t")
 
         write.table(cbind(d, v, rho, s, birth, death, sampling, times, origin), pf,
             append = file.exists(params_f),
             row.names = F, quote = F, col.names = (good == 0)
         )
 
-        tree <- FossilSim::SAtree.from.fossils(tree = t, fossils = oy)
-        fossils <- tree$fossils
-        tree <- tree$tree
-        print(fossils)
-        nfossils <- nrow(fossils)
-        if (nfossils > 1000) {
-            unlink(paste(out_dir, good, sep = ""))
-            cat("\nDELETING DIRECTORY\n")
-            sample_reject <- sample_reject + 1
-            next
-        }
-        origin <- FossilSim::tree.max(tree) + tree$root.edge
-        tree <- SAtree(tree, TRUE)
-
-        cat("\nFINAL TREE\n")
-        print(write.tree(tree))
         print(write.tree(tree, file = paste(out_dir, "out", sep = ""), append = TRUE))
-
-
         good <- good + 1
     }
 }

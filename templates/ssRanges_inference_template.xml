@@ -92,7 +92,7 @@
 
         <distribution id="posterior" spec="CompoundDistribution">
             <distribution id="prior" spec="CompoundDistribution">
-                <distribution spec="SRangesBirthDeathSkylineModel" id="birthDeath" tree="@tree" conditionOnSurvival="true" removalProbability="0.0 0.0 0.0 0.0" intervalTimes="0 1 2 3">
+                <distribution spec="SRangesBirthDeathSkylineModel" id="birthDeath" tree="@tree" conditionOnSurvival="true" removalProbability="0.0 0.0" intervalTimes="0 2">
                     <origin idref="origin"/>
                     <netDiversification idref="netDiversification"/>
                     <turnOver idref="turnOver"/>
