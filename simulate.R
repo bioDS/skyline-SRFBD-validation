@@ -30,7 +30,6 @@ file.create(paste(out_dir, "out", sep = ""))
 set.seed(5647829)
 
 
-
 ### Parameter transformation functions
 f_lambda <- function(diversification, turnover) {
   return(diversification / (1 - turnover))
@@ -55,6 +54,8 @@ psi <- NULL
 redraws <- 0
 origin <- 4
 
+# Boundaries of skyline intervals. This should always include zero, and not the origin.
+# In this case there are four boundaries. The first boundary is from 0 - 1, and the last from 3 - 4 (the origin).
 times = c(0,1,2,3)
 ints= length(times)
 
@@ -87,6 +88,8 @@ max_nodes <- 1000
 min_fossils <- 0
 max_fossils <- 10000
 
+
+# This structure is getting rather large as the number of intervals increase - it would be worth finding a dynamic way to define this if there are significantly more intervals.
 true_rates <- data.frame(
   div_rate_1 = numeric(), div_rate_2 = numeric(), div_rate_3 = numeric(), div_rate_3 = numeric(), 
   turnover_1 = numeric(), turnover_2 = numeric(),   turnover_3 = numeric(), turnover_4 = numeric(),
@@ -97,14 +100,6 @@ true_rates <- data.frame(
    times=numeric(), origin = numeric(), mrca = numeric(), tree = character(),
   n_samples = numeric(), n_extant = numeric(), n_ranges = numeric(), draws = numeric()
 )
-
-# true_rates <- data.frame(
-#   div_rate = numeric(), turnover = numeric(), 
-#   sampling_prop = numeric(), rho = numeric(), 
-#   birth=numeric(), birth=numeric(), death=numeric(), sampling =numeric(),
-#    times=numeric(), origin = numeric(), mrca = numeric(), tree = character(),
-#   n_samples = numeric(), n_extant = numeric(), n_ranges = numeric(), draws = numeric()
-# )
 
 ### Simulate Trees
 
@@ -117,10 +112,8 @@ samp_trees <- list()
 while (length(trees) < ntrees) {
   redraw_params()
   redraws <- redraws + 1
-  # tree_tmp <- TreeSim::sim.bd.age(origin, 1, lambda, mu)
-  cat("lambda = ", lambda, " mu = ", mu, "\n")
+  # Simulate tree using skyline parameters
   tree_tmp <- TreeSim::sim.rateshift.age(age = origin, numbsim = 1, lambda = lambda, mu = mu, times = times, mrca = FALSE, complete = TRUE)
-
 
   if (length(tree_tmp[[1]]) == 1 || tree_tmp[[1]]$Nnode > max_nodes) {
     next # reject and redraw parameters
@@ -131,14 +124,13 @@ while (length(trees) < ntrees) {
   }
     t <- tree_tmp[1][[1]]
     origin <- tree.max(as.phylo(t))
-    horizons <- c(times, origin)
+  # Call to FossilSim needs to include the origin in the interval input  
+  horizons <- c(times, origin)
   taxonomy_tmp <- sim.taxonomy(tree_tmp[[1]], beta = 0, lambda.a = 0)
-  #fossils_tmp <- FossilSim::sim.fossils.poisson(psi, taxonomy = taxonomy_tmp)
-fossils_tmp <- FossilSim::sim.fossils.intervals(rates=psi, taxonomy = taxonomy_tmp, interval.ages = horizons)
-
-
+  # Simualte fossils using skyline rates.
+  fossils_tmp <- FossilSim::sim.fossils.intervals(rates=psi, taxonomy = taxonomy_tmp, interval.ages = horizons)
   beast_tree_tmp <- beast.fbd.format(tree_tmp[[1]], fossils_tmp, rho = sampl_extant_prob, digits = 16)
-write(beast_tree_tmp, file = paste(out_dir, "out", sep = ""), append = TRUE)
+  write(beast_tree_tmp, file = paste(out_dir, "out", sep = ""), append = TRUE)
   tree_after_rho <- ape::read.tree(text = beast_tree_tmp)
   mrca <- max(ape::node.depth.edgelength(tree_after_rho))
   n_ext <- length(which((mrca - ape::node.depth.edgelength(tree_after_rho)) < 1e-7))
@@ -149,7 +141,6 @@ write(beast_tree_tmp, file = paste(out_dir, "out", sep = ""), append = TRUE)
 
   trees <- c(trees, tree_tmp)
   beast_trees[[length(trees)]] <- beast_tree_tmp
-#   print(beast_tree_tmp)
   fossils[[length(trees)]] <- fossils_tmp
   taxonomy <- c(taxonomy, taxonomy_tmp)
   true_rates_tmp <- data.frame(div_rate[1],  div_rate[2], div_rate[3],  div_rate[4], turnover[1], turnover[2], turnover[3], turnover[4], 
@@ -163,8 +154,7 @@ write(beast_tree_tmp, file = paste(out_dir, "out", sep = ""), append = TRUE)
     print(i)
 }
 
-# Now create simulation xmls for each tree and use it to simulate DNA and morphological
-# alignments at all occurences. Then remove DNA for extinct occurences.
+# Now create simulation xmls for each tree. We don't currently include DNA or morphological characters.
 
 for (i in 1:ntrees) {
   beast_tree <- beast_trees[[i]]
@@ -396,7 +386,6 @@ for (i in 1:ntrees) {
                                 name='stateNode'>", rnd_sampl_extant_prob, "</parameter>"),
     x = sim
   )
-
     cat("mrca", mrca, "\n")
     index = i - 1
     inf_dir <- paste0("inf/", index)
