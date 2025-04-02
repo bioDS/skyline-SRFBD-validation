@@ -4,11 +4,11 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --output=logs/slurm-%A_%a.out
 #SBATCH --error=logs/slurm-%A_%a.err
-#SBATCH --job-name=dna_job
+#SBATCH --job-name=sranges-validation
 #SBATCH --array=0-199
 
 SEED=$SLURM_ARRAY_TASK_ID 
-cd "inf_2_ints/${SEED}/";
+cd "inf/${SEED}/";
 ~/skyline/zulu17.54.21-ca-fx-jdk17.0.13-linux_x64/bin/java -Djava.awt.headless=true -Djava.library.path=/lib/x86_64-linux-gnu/  \
     --add-modules javafx.fxml,javafx.base \
     -jar ../../ssr.jar -threads -1 -seed 42 \
@@ -20,6 +20,6 @@ cd "inf_2_ints/${SEED}/";
     -version_file ../../version-beastLabs.xml \
     -version_file ../../version-mm.xml \
     -version_file ../../version-beastfx.xml \
-    -overwrite ssRanges_inference.xml
+    -overwrite *.xml
 
 cd ../../

@@ -29,14 +29,14 @@
 
 
 
-    <insertStartDNAData/>
+    <!-- <insertStartDNAData/>
     <siteModel spec='SiteModel' id="siteModel_dna" gammaCategoryCount='1'>
         <substModel spec='JukesCantor' id='JC69'/>
     </siteModel>
 
     <branchRateModel id="StrictClock_dna" spec="beast.base.evolution.branchratemodel.StrictClockModel">
         <parameter dimension="1" estimate="false" id="clockRate_dna" minordimension="1" name="clock.rate" value="0.01"/>
-    </branchRateModel>
+    </branchRateModel> -->
 
     <map name="Uniform">beast.base.inference.distribution.Uniform</map>
     <map name="Exponential">beast.base.inference.distribution.Exponential</map>
@@ -63,9 +63,6 @@
                 <taxonset idref="taxonSet" />
                 <inputStratRanges/>
             </tree>
-<!-- 
-            <initTimes/>
- -->
             <initOrigin/>
             <initDiversificationRate/>
             <initTurnover/>
@@ -92,7 +89,7 @@
 
         <distribution id="posterior" spec="CompoundDistribution">
             <distribution id="prior" spec="CompoundDistribution">
-                <distribution spec="SRangesBirthDeathSkylineModel" id="birthDeath" tree="@tree" conditionOnSurvival="true" removalProbability="0.0 0.0" intervalTimes="0 2">
+                <distribution spec="SRangesBirthDeathSkylineModel" id="birthDeath" tree="@tree" conditionOnSurvival="true" removalProbability="0.0 0.0 0.0 0.0" intervalTimes="0 1 2 3">
                     <origin idref="origin"/>
                     <netDiversification idref="netDiversification"/>
                     <turnOver idref="turnOver"/>
@@ -117,11 +114,11 @@
 
             </distribution>
 
-            <distribution id="dnaTreeLikelihood" spec="TreeLikelihood" useAmbiguities="true" tree="@tree">
+            <!-- <distribution id="dnaTreeLikelihood" spec="TreeLikelihood" useAmbiguities="true" tree="@tree">
                 <data idref="dna_alignment"/>
                 <siteModel idref="siteModel_dna"/>
                 <branchRateModel idref="StrictClock_dna"/>
-            </distribution>
+            </distribution> -->
 
 <!-- 
             <distribution id="morphTreeLikelihood" spec="TreeLikelihood" useAmbiguities="true" tree="@tree">
@@ -141,17 +138,17 @@
         <operator id='rhoOperator' spec='ScaleOperator' scaleFactor=".75" weight="5" parameter="@rho"/>
 
 <!--        Tree operators -->
-        <operator id="SATreeRootScaler" rootOnly="true" scaleFactor="0.95" spec="SAScaleOperator" tree="@tree" weight="3.0" />
         <operator id="SRWilsonBalding" spec='SRWilsonBalding' weight="20" tree="@tree"/>
         <operator id="LeftRightChildSwap" spec='LeftRightChildSwap' weight="5" tree="@tree"/>
         <operator id="LeafToSampledAncestorJump" spec='SRLeafToSampledAncestorJump' weight="20" tree="@tree" />
         <operator spec="SAUniform" weight="20" tree="@tree"/>
-        <operator id='treeScaler' spec="SAScaleOperator" scaleFactor=".95" weight="10.0" tree="@tree"/>
+        <operator id="SATreeRootScaler" rootOnly="true" scaleFactor="0.56" spec="SAScaleOperator" tree="@tree" weight="3.0" />
+        <operator id='treeScaler' spec="SAScaleOperator" scaleFactor="0.16" weight="10.0" tree="@tree"/>
 
 
         <logname/>
             <model idref='posterior'/>
-            <log idref="dnaTreeLikelihood"/>
+            <!-- <log idref="dnaTreeLikelihood"/> -->
 <!-- 
             <log idref="morphTreeLikelihood"/>
  -->
