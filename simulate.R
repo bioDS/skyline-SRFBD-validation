@@ -335,6 +335,11 @@ for (i in 1:ntrees) {
     replace = taxon_set_str, x = sim
   )
 
+    sim <- gsub(
+    pattern = "</intervalTimes/>",
+    replace = paste(times, collapse = " "), x = sim
+  )
+
   sim <- gsub(
     pattern = "<inputTaxaAge/>",
     replace = taxa_age_str, x = sim
