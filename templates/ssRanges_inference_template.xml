@@ -50,7 +50,7 @@
     <map name="OneOnX">beast.base.inference.distribution.OneOnX</map>
 
 
-    <run spec="MCMC" id="mcmc" chainLength="60000000">
+    <run spec="MCMC" id="mcmc" chainLength="5000000">
 
         <state id="state" storeEvery="100">
             <tree id="tree" spec="sr.evolution.tree.SRTree" nodetype="sr.evolution.tree.SRNode" name="stateNode">

@@ -130,7 +130,7 @@ while (length(trees) < ntrees) {
   # Simualte fossils using skyline rates.
   fossils_tmp <- FossilSim::sim.fossils.intervals(rates=psi, taxonomy = taxonomy_tmp, interval.ages = horizons)
   beast_tree_tmp <- beast.fbd.format(tree_tmp[[1]], fossils_tmp, rho = sampl_extant_prob, digits = 16)
-  write(beast_tree_tmp, file = paste(out_dir, "out", sep = ""), append = TRUE)
+  # print(beast_tree_tmp)
   tree_after_rho <- ape::read.tree(text = beast_tree_tmp)
   mrca <- max(ape::node.depth.edgelength(tree_after_rho))
   n_ext <- length(which((mrca - ape::node.depth.edgelength(tree_after_rho)) < 1e-7))
@@ -138,7 +138,7 @@ while (length(trees) < ntrees) {
   if (n_ext < min_ext_samples || n_fossils < min_fossils || n_fossils > max_fossils) {
     next # reject and redraw parameters
   }
-
+  write(beast_tree_tmp, file = paste(out_dir, "out", sep = ""), append = TRUE)
   trees <- c(trees, tree_tmp)
   beast_trees[[length(trees)]] <- beast_tree_tmp
   fossils[[length(trees)]] <- fossils_tmp
@@ -400,7 +400,7 @@ for (i in 1:ntrees) {
         sim <- gsub(
         pattern = "<logname/>",
         replace = paste0(
-            "<logger logEvery=\"5000\" fileName=\"", inf_full,
+            "<logger logEvery=\"200\" fileName=\"", inf_full,
             "/sRanges.$(seed).log\">"
         ),
         x = sim
@@ -420,3 +420,6 @@ for (i in 1:ntrees) {
 save.image(file = "simulation.RData")
 
 write.csv(true_rates, "true_rates.csv")
+file.create(paste(out_dir, "true_rates.csv", sep = ""))
+write.csv(true_rates, file = paste(out_dir, "true_rates.csv", sep = ""))
+

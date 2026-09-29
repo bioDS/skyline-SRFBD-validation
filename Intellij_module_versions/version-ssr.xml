@@ -6,7 +6,7 @@
     <depends on="SA" atleast="2.1.0"/>
     <depends on="bdsky" atleast="1.4.8"/>
     <depends on="feast" atleast="10.3.1"/>
-<!--    <depends on="MM" atleast="1.2.0"/>-->
+	<depends on="MM" atleast="1.2.0"/>
 
     <packageapp description="SRangesAndSACladeSetComparator"
                 class="ssr.util.loggers.SRangesAndSACladeSetComparator"
