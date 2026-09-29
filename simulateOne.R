@@ -1,4 +1,6 @@
-# Simulation code foe validating use of one skyline interval.
+# Simulation code for validating use of one skyline interval.
+# Based on https://github.com/jugne/sRanges-material/blob/main/validation/estimate_all_params_ext_dna/simulate.R
+
 
 rm(list = ls())
 options(digits = 16)
@@ -11,7 +13,6 @@ library(beastio)
 library(FossilSim)
 library(R.utils)
 
-# Based on https://github.com/jugne/sRanges-material/blob/main/validation/estimate_all_params_ext_dna/simulate.R
 
 ## helper function
 "%notin%" <- Negate("%in%")
