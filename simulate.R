@@ -1,3 +1,6 @@
+# Code to simulate 200 trees with four equal length skyline intervals to validate the sRanges package.
+# Based on https://github.com/jugne/sRanges-material/blob/main/validation/estimate_all_params_ext_dna/simulate.R
+
 rm(list = ls())
 options(digits = 16)
 
@@ -9,7 +12,6 @@ library(beastio)
 library(FossilSim)
 library(R.utils)
 
-# Based on https://github.com/jugne/sRanges-material/blob/main/validation/estimate_all_params_ext_dna/simulate.R
 
 ## helper function
 "%notin%" <- Negate("%in%")
