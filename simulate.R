@@ -208,11 +208,7 @@ for (i in 1:ntrees) {
   }
   true_rates$n_ranges[i] <- j
 
-  # sim <- readLines(paste0(templates_dir, "ssRanges_inference_template.xml"))
-  # sim <- gsub(
-  #   pattern = "insertNewick",
-  #   replace = paste0("newick='", beast_tree, "'"), x = sim
-  # )
+
   taxon_extant_str <- c()
   for (tx in taxon) {
     taxon_extant_str <- c(taxon_extant_str, paste0("<sequence spec='Sequence' taxon='", tx, "' value='?'/>"))
@@ -231,104 +227,11 @@ for (i in 1:ntrees) {
   taxon_set_str <- paste0(taxon_set_str, collapse = "\n\t\t\t\t\t\t")
   taxa_age_str <- paste0(taxa_age_str, collapse = ", ")
 
-#   sim <- gsub(
-#     pattern = "<insertSequence/>",
-#     replace = taxon_extant_str, x = sim
-#   )
-
-  ##### run beast on the xml simulating DNA data
-#   sim_dir <- paste0(wd, "run_", i, "/sim")
-#   dir.create(sim_dir, recursive = T)
-#   setwd(sim_dir)
-#   writeLines(sim, con = "sRanges_simDNA.xml")
-#   cmd <- paste0(beast_dir, " -seed 42 sRanges_simDNA.xml")
-#   system(cmd)
-
-#   ## remove DNA from extinct occurences
-#   extinct <- taxon[which(taxon %notin% taxon_extant)]
-#   dna_sim <- readLines("simulated_dna_alignment.xml")
-#   idx <- grep("<data id=", dna_sim)
-#   dna_sim[idx] <- "<data id='dna_alignment' spec='beast.base.evolution.alignment.Alignment'>"
-#   for (tax in extinct) {
-#     idx <- grep(tax, dna_sim)
-#     dna_sim[idx] <- paste0(
-#       "    <sequence spec='beast.base.evolution.alignment.Sequence' taxon='",
-#       tax, "' value='", paste0(rep("-", 1000),
-#         collapse = ""
-#       ), "'/>"
-#     )
-#   }
-#   dna_sim <- gsub(
-#     pattern = "id='Sequence",
-#     replace = "id='dna", x = dna_sim
-#   )
-
-#   writeLines(dna_sim, "simulated_dna_alignment.xml")
 
 
-
-  ####### simulate morph sequences
-
-#   sim <- readLines(paste0(templates_dir, "sRanges_simMorph_template.xml"))
-#   sim <- gsub(
-#     pattern = "insertNewick",
-#     replace = paste0("newick='", beast_tree, "'"), x = sim
-#   )
-#   taxon_extant_str <- c()
-#   for (tx in taxon) {
-#     taxon_extant_str <- c(taxon_extant_str, paste0("<sequence spec='Sequence' taxon='", tx, "' value='?'/>"))
-#   }
-#   taxon_extant_str <- paste0(taxon_extant_str, collapse = "\n\t\t\t")
-
-#   taxon_str <- c()
-#   taxon_set_str <- c()
-#   taxa_age_str <- c()
-#   for (tx in taxon) {
-#     taxon_str <- c(taxon_str, paste0("<sequence spec='Sequence' taxon='", tx, "' value='?'/>"))
-#     taxon_set_str <- c(taxon_set_str, paste0("<taxon spec='Taxon' id='", tx, "'/>"))
-#     taxa_age_str <- c(taxa_age_str, paste0(tx, "=", sample_times_round[which(tmp_tree$tip.label == tx)]))
-#   }
-#   taxon_str <- paste0(taxon_str, collapse = "\n\t\t\t")
-#   taxon_set_str <- paste0(taxon_set_str, collapse = "\n\t\t\t\t\t\t")
-#   taxa_age_str <- paste0(taxa_age_str, collapse = ", ")
-
-#   sim <- gsub(
-#     pattern = "<insertMorphSequence/>",
-#     replace = taxon_str, x = sim
-#   )
-
-#   ##### run beast on the xml simulating morphological data
-#   writeLines(sim, con = "sRanges_simMorph.xml")
-#   cmd <- paste0(beast_dir, " -seed 42 sRanges_simMorph.xml")
-#   system(cmd)
-
-#   morph_sim <- readLines("simulated_morph_alignment.xml")
-#   idx <- grep("<data id=", morph_sim)
-#   morph_sim[idx] <- "<data id='morph_alignment' spec='beast.base.evolution.alignment.Alignment'>"
-#   morph_sim <- gsub(
-#     pattern = "id='Sequence",
-#     replace = "id='morph", x = morph_sim
-#   )
-#   morph_sim <- gsub(
-#     pattern = ",",
-#     replace = "", x = morph_sim
-#   )
-
-  ####### now create inference xmls, with the previosuly simulated data
+  ####### now create inference xmls, with the preeviously simulated data
   sim <- readLines(paste0(templates_dir, "ssRanges_inference_template.xml"))
-#   sim <- gsub(
-#     pattern = "<insertStartMorphData/>",
-#     replace = paste0(morph_sim, collapse = "\n"), x = sim
-#   )
-#   sim <- gsub(
-#     pattern = "<insertStartDNAData/>",
-#     replace = paste0(dna_sim, collapse = "\n"), x = sim
-#   )
 
-#   sim <- gsub(
-#     pattern = "<insertMorphSequence/>",
-#     replace = taxon_str, x = sim
-#   )
 
   sim <- gsub(
     pattern = "<inputTaxa/>",
