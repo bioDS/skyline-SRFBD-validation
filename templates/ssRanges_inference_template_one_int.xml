@@ -16,7 +16,7 @@
        :feast.parameter
        :ssr.speciation'>
 
-<!-- 
+
     <insertStartMorphData/>
     <siteModel id="morphSiteModel" spec="SiteModel" gammaCategoryCount="1">
         <substModel id="LewisMK" spec="morphmodels.evolution.substitutionmodel.LewisMK" datatype="@morphDataType"/>
@@ -25,18 +25,17 @@
     <branchRateModel id="StrictClock_morph" spec="beast.base.evolution.branchratemodel.StrictClockModel">
         <parameter dimension="1" estimate="false" id="clockRate_morph" minordimension="1" name="clock.rate" value="0.01"/>
     </branchRateModel>
- -->
 
 
 
-    <!-- <insertStartDNAData/>
+    <insertStartDNAData/>
     <siteModel spec='SiteModel' id="siteModel_dna" gammaCategoryCount='1'>
         <substModel spec='JukesCantor' id='JC69'/>
     </siteModel>
 
     <branchRateModel id="StrictClock_dna" spec="beast.base.evolution.branchratemodel.StrictClockModel">
         <parameter dimension="1" estimate="false" id="clockRate_dna" minordimension="1" name="clock.rate" value="0.01"/>
-    </branchRateModel> -->
+    </branchRateModel> 
 
     <map name="Uniform">beast.base.inference.distribution.Uniform</map>
     <map name="Exponential">beast.base.inference.distribution.Exponential</map>
@@ -50,7 +49,7 @@
     <map name="OneOnX">beast.base.inference.distribution.OneOnX</map>
 
 
-    <run spec="MCMC" id="mcmc" chainLength="5000000">
+    <run spec="MCMC" id="mcmc" chainLength="2000000"> <!-- add extra 0 back in...-->
 
         <state id="state" storeEvery="100">
             <tree id="tree" spec="sr.evolution.tree.SRTree" nodetype="sr.evolution.tree.SRNode" name="stateNode">
@@ -89,7 +88,7 @@
 
         <distribution id="posterior" spec="CompoundDistribution">
             <distribution id="prior" spec="CompoundDistribution">
-                <distribution spec="SRangesBirthDeathSkylineModel" id="birthDeath" tree="@tree" conditionOnSurvival="true" removalProbability="0.0" intervalTimes="</intervalTimes/>">
+                <distribution spec="SRangesBirthDeathSkylineModel" id="birthDeath" tree="@tree"  contemp="true" conditionOnSurvival="true" removalProbability="0.0" intervalTimes="</intervalTimes/>">
                     <origin idref="origin"/>
                     <netDiversification idref="netDiversification"/>
                     <turnOver idref="turnOver"/>
@@ -114,19 +113,18 @@
 
             </distribution>
 
-            <!-- <distribution id="dnaTreeLikelihood" spec="TreeLikelihood" useAmbiguities="true" tree="@tree">
+            <distribution id="dnaTreeLikelihood" spec="TreeLikelihood" useAmbiguities="true" tree="@tree">
                 <data idref="dna_alignment"/>
                 <siteModel idref="siteModel_dna"/>
                 <branchRateModel idref="StrictClock_dna"/>
-            </distribution> -->
+            </distribution>
 
-<!-- 
+ 
             <distribution id="morphTreeLikelihood" spec="TreeLikelihood" useAmbiguities="true" tree="@tree">
                 <data idref="morph_alignment"/>
                 <siteModel idref="morphSiteModel"/>
                 <branchRateModel idref="StrictClock_morph"/>
             </distribution>
- -->
         </distribution>
 
 
