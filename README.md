@@ -2,8 +2,8 @@ This repository contains validation code for the [ssRanges BEAST 2 pacage](https
 
 The code uses a [fork of TreeSim](https://github.com/bioDS/TreeSim) suitable for skyline diversification rates.
 
-`simulate.R` contains code to simulate 200 trees using four equal length skyline intervals, and to produce XML files to infer the diversification rates for each tree, while `simulateOne.R` is the equivalent script for 200 trees with only one skyline inteval (equivalent to constant rates). The four interval script use the template XML `templates/ssRanges_inference_template.xml` to produce the XML for each simulation, while the one interval script uses `ssRanges_inference_template_one_int.xml`.
+Use `bash pipeline.sh two` to run the complete validation process for two analyes, one for 200 simulated trees on four equal length skyline intervals, and one for 200 simulated trees with one skyline interval (equiavalent to using constant rates). Calling `bash pipeline.sh` without arguments runs these analyses, as well as a third analysis which uses the *sRanges* package on one interval in order to compare results. 
 
-Use `slurm-inferences.sh` to run the BEAST 2 analyses for each simulated tree. The script uses the `Intellij_module_versions` folder to control the versions of BEAST 2 packages used.
+The four interval script use the template XML `templates/ssRanges_inference_template.xml` to produce the XML for each simulation, while the one interval script using the *ssRanges* package relies on `ssRanges_inference_template_one_int.xml`. All analyses utilise the DNA and morphological data xml files in the [templates](templates/) folder.
 
-Code to graph the log files from analyses is included in the `graphing` folder.
+The pipeline script also calls `validation_plots.R` to produce qq plots and rank uniformity plots from the finished analyses.
