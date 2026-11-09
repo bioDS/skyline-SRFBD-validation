@@ -49,9 +49,9 @@
     <map name="OneOnX">beast.base.inference.distribution.OneOnX</map>
 
 
-    <run spec="MCMC" id="mcmc" chainLength="2000000"> <!-- add extra 0 back in...-->
+    <run spec="MCMC" id="mcmc" chainLength="20000000"> 
 
-        <state id="state" storeEvery="100">
+        <state id="state" storeEvery="10000">
             <tree id="tree" spec="sr.evolution.tree.SRTree" nodetype="sr.evolution.tree.SRNode" name="stateNode">
                 <trait id="dateTrait.t:tree" spec="beast.base.evolution.tree.TraitSet" traitname="date-backward">
                     <taxa spec="TaxonSet" id="taxonSet">
@@ -88,7 +88,7 @@
 
         <distribution id="posterior" spec="CompoundDistribution">
             <distribution id="prior" spec="CompoundDistribution">
-                <distribution spec="SRangesBirthDeathSkylineModel" id="birthDeath" tree="@tree"  contemp="true" conditionOnSurvival="true" removalProbability="0.0" intervalTimes="</intervalTimes/>">
+                <distribution spec="SRangesBirthDeathSkylineModel" id="birthDeath" tree="@tree"  contemp="true" conditionOnRhoSampling="true" conditionOnSurvival="false" removalProbability="0.0" intervalTimes="</intervalTimes/>">
                     <origin idref="origin"/>
                     <netDiversification idref="netDiversification"/>
                     <turnOver idref="turnOver"/>

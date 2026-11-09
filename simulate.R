@@ -12,6 +12,7 @@
 #   --morph_template      morphological simulation XML template
 # Template paths are relative to the working directory (wd below) unless absolute.
 # Based on https://github.com/jugne/sRanges-material/blob/main/validation/estimate_all_params_ext_dna/simulate.R
+# Edits made with ChatGPT and Claude
 
 rm(list = ls())
 options(digits = 16)
@@ -21,7 +22,11 @@ library(phytools)
 library(ggplot2)
 library(stringr)
 library(beastio)
+
+# It is important to use FossilSim 2.3.3 - the latest release as of November 2026. 
+.libPaths(c(path.expand("~/R/fossilsim_2.3.3"), .libPaths()))   
 library(FossilSim)
+stopifnot(packageVersion("FossilSim") == "2.3.3")
 library(R.utils)
 
 
@@ -44,7 +49,9 @@ get_arg <- function(name, default) {
   if (length(hit)) sub(paste0("^--", name, "="), "", hit[1]) else default
 }
 
+# default is four skyline intervals of equal length
 times_arg          <- get_arg("times", "0,1,2,3")
+# read in templates
 inference_template <- normalizePath(get_arg("inference_template", paste0(templates_dir, "ssRanges_inference_template.xml")), mustWork = TRUE)
 dna_template       <- normalizePath(get_arg("dna_template",       paste0(templates_dir, "sRanges_simDNA_template.xml")),       mustWork = TRUE)
 morph_template     <- normalizePath(get_arg("morph_template",     paste0(templates_dir, "sRanges_simMorph_template.xml")),     mustWork = TRUE)
@@ -108,6 +115,7 @@ origin = 4
 times = as.numeric(strsplit(times_arg, "[, ]+")[[1]])
 if (any(is.na(times)) || times[1] != 0 || is.unsorted(times, strictly = TRUE) || max(times) >= origin)
   stop("--times must be increasing, start at 0 and be below the origin (", origin, "): got '", times_arg, "'")
+ # number of skyline intervals 
 ints= length(times)
 cat("Intervals:", ints, " times:", paste(times, collapse = " "), "\n")
 cat("Inference template:", inference_template, "\n")
@@ -141,6 +149,8 @@ max_nodes = 1000
 min_fossils = 0
 max_fossils = 10000
 
+# If we have only one sample for the species and it has the suffix _last, change it to _first instead so that we can
+# easily define stratigraphic ranges in the xml.
 fix_singleton_last <- function(tree, newick) {
   labs <- tree$tip.label
   sp   <- sub("_.*", "", labs)
@@ -186,13 +196,15 @@ while(length(trees) < ntrees) {
   # Call to FossilSim needs to include the origin in the interval input  
   horizons <- c(times, actual_origin)
   taxonomy_tmp <- sim.taxonomy(tree_tmp[[1]], beta = 0, lambda.a = 0)
-  # Simualte fossils using skyline rates.
+  # Simulate fossils using skyline rates.
   fossils_tmp = FossilSim::sim.fossils.intervals(rates=psi, taxonomy = taxonomy_tmp, interval.ages = horizons)
+  # Apply sampling probability
   beast_tree_tmp = beast.fbd.format(tree_tmp[[1]], fossils_tmp, rho = sampl_extant_prob, digits = 16)
   tree_after_rho = ape::read.tree(text = beast_tree_tmp)
   mrca = max(ape::node.depth.edgelength(tree_after_rho))
   n_ext <- length(which((mrca - ape::node.depth.edgelength(tree_after_rho)) < 1e-7))
   n_fossils <- length(tree_after_rho$tip.label) - n_ext
+  # Check minimum and maximum fossil / sample requirements are met.
   if (n_ext < min_ext_samples || n_fossils < min_fossils || n_fossils > max_fossils){
     next # reject and redraw parameters
   }
@@ -201,6 +213,7 @@ while(length(trees) < ntrees) {
   beast_trees[[length(trees)]] <- beast_tree_tmp
   fossils[[length(trees)]] <- fossils_tmp
   taxonomy <- c(taxonomy, taxonomy_tmp)
+  # Store parameters
   vals <- c(
     setNames(div_rate,      paste0("div_rate_", 1:ints)),
     setNames(turnover,      paste0("turnover_", 1:ints)),
@@ -227,12 +240,13 @@ while(length(trees) < ntrees) {
 
 true_rates <- do.call(rbind, true_rates_list)
 true_rates <- data.frame(sim = seq_len(nrow(true_rates)), true_rates)
-# Now create simulation xmls for each tree.
 
+# Now create simulation xmls for each tree.
 for (i in 1:ntrees) {
   beast_tree <- beast_trees[[i]]
   true_rates$tree[i] = beast_tree
   tmp_tree <- ape::read.tree(text = beast_tree)
+  # Make single sample (per species) labels consistent
   fixed      <- fix_singleton_last(tmp_tree, beast_tree)
   tmp_tree   <- fixed$tree
   beast_tree <- fixed$newick
@@ -242,10 +256,12 @@ for (i in 1:ntrees) {
   mrca <- max(sample_times)  
   labs <- tmp_tree$tip.label
   sp   <- sub("_.*", "", labs)
+  # Check labels match species numbers
   bad  <- Filter(function(s) {
   if (sum(sp == s) > 1) !(paste0(s, "_last") %in% labs) else !(paste0(s, "_first") %in% labs)
   }, unique(sp))
   if (length(bad)) { cat("Tree", i, "\n"); print(labs[sp %in% bad]) } 
+
   sample_times_round = round(sample_times, 15)
   sample_times_round[which(sample_times_round < 1e-10)] <- 0
   oldest_sample <- max(sample_times_round[seq_len(ape::Ntip(tmp_tree))])
@@ -256,10 +272,13 @@ for (i in 1:ntrees) {
   strat_ranges_refs = list()
   j = 0
   k = 1
+
+  # Want to add stratigraphic range definitions for the xml.
   for (k in 1:length(unique(sub("_.*", "", tmp_tree$tip.label)))) {
 
     tip = unique(sub("_.*", "", tmp_tree$tip.label))[k]
     taxon <- append(taxon, paste0(tip, "_first"))
+    # There is both a first and a last occurrence for this species
     if (length(which(sub("_.*", "", tmp_tree$tip.label) %in% tip)) > 1) {
       taxon <- append(taxon, paste0(tip, "_last"))
       strat_ranges <- append(strat_ranges,
@@ -270,6 +289,7 @@ for (i in 1:ntrees) {
       if (sample_times_round[which(tmp_tree$tip.label == paste0(tip, "_last"))] == 0.0) {
         taxon_extant <- append(taxon_extant, paste0(tip, "_last"))
       }
+      # We only have only occurrence so it is both the first and the last occurrence.
     } else {
       strat_ranges <- append(
         strat_ranges,
@@ -280,19 +300,18 @@ for (i in 1:ntrees) {
           paste0(tip, "_first"), '"/>'
         )
       )
+      # Record tips
       if (sample_times_round[which(tmp_tree$tip.label == paste0(tip, "_first"))] == 0.0) {
         taxon_extant <- append(taxon_extant, paste0(tip, "_first"))
       }
     }
+    # Define stratigraphic range
     strat_ranges_refs <- append(strat_ranges_refs, paste0('<stratigraphicRange idref="r', j, '"/>'))
     j = j + 1
   }
   true_rates$n_ranges[i] = j
 
-
-  sim <- readLines(dna_template)
-  sim  <- gsub(pattern = "insertNewick",
-               replace = paste0("newick='", beast_tree, "'"), x = sim)
+  # need to include sequences for each taxon
   taxon_extant_str = c()
   for (tx in taxon){
     taxon_extant_str <- c(taxon_extant_str, paste0("<sequence spec='Sequence' taxon='",tx,"' value='?'/>"))
@@ -311,10 +330,13 @@ for (i in 1:ntrees) {
   taxon_set_str <- paste0(taxon_set_str, collapse = "\n\t\t\t\t\t\t")
   taxa_age_str <- paste0(taxa_age_str, collapse = ", ")
   
+    ##### run beast on the xml simulating DNA data
+  sim <- readLines(dna_template)
+  sim  <- gsub(pattern = "insertNewick",
+               replace = paste0("newick='", beast_tree, "'"), x = sim)
   sim  <- gsub(pattern = "<insertSequence/>",
                replace = taxon_extant_str, x = sim)
   
-  ##### run beast on the xml simulating DNA data
   sim_dir <- paste0(run_dir, "sim/", i)
   dir.create(sim_dir, recursive = TRUE)
   setwd(sim_dir)
@@ -362,7 +384,7 @@ for (i in 1:ntrees) {
                      replace = "", x = morph_sim)
   setwd(wd)
   
-  ####### now create inference xmls, with the previosuly simulated data
+  ####### now create inference xmls, with the previously simulated data
   sim <- readLines(inference_template)
   sim  <- gsub(pattern = "<insertStartMorphData/>",
                replace = paste0(morph_sim, collapse = "\n"), x = sim)
@@ -388,12 +410,13 @@ for (i in 1:ntrees) {
   sim  <- gsub(pattern = "<inputStratRangesRef/>",
                replace = paste0(strat_ranges_refs, collapse = "\n\t\t\t"), x = sim)
   
-    rnd_origin <- runif(1, max(2 * oldest_sample, 1), 500) # start above the oldest sample 
+  rnd_origin <- runif(1, max(2 * oldest_sample, 1), 500) # start above the oldest sample 
   rnd_div_rate <- runif(ints, 0.7, 0.9)
   rnd_turnover <- runif(ints, 0.2, 0.8)
   rnd_sampling_prop <- runif(ints, 0.2, 0.8)
   rnd_sampl_extant_prob <- runif(1, 0.7, 1.)
 
+  # insert starting values into XML
   sim <- gsub(
     pattern = "<initOrigin/>",
     replace = paste0("<parameter id='origin' lower='0.0'
@@ -426,6 +449,7 @@ for (i in 1:ntrees) {
     x = sim
   )
 
+  # Make directory to store xml and results.
   inf_dir <- paste0(run_dir, "inf/", i)
   dir.create(inf_dir, recursive = TRUE)
 
